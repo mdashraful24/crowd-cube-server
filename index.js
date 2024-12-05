@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -25,6 +25,129 @@ async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
         await client.connect();
+
+        const crowdCubeCollection = client.db('crowdCubeDB').collection('crowdCube');
+        const userCollection = client.db('crowdCubeDB').collection('users');
+
+
+
+        // New Campaign data read
+        app.get('/addCampaign', async (req, res) => {
+            const cursor = crowdCubeCollection.find();
+            const result = await cursor.toArray();
+            res.send(result);
+        })
+
+        // Update Campaign
+        app.get('/addCampaign/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await crowdCubeCollection.findOne(query);
+            res.send(result);
+        })
+
+        // Details Camp
+        app.get('/running/:id', async (req, res) => {
+            const id = req.params.id;  // Use req.params.id instead of res.params.id
+            const query = { _id: new ObjectId(id) };
+            const result = await crowdCubeCollection.findOne(query);
+            res.send(result);
+        });
+
+        // My donation
+        app.get("/myDonations", async (req, res) => {
+            const userEmail = req.params.userEmail;
+            console.log(userEmail)
+            const query = { userEmail: userEmail };
+            const result = await crowdCubeCollection.find(query).toArray();
+            res.send(result);
+        });
+
+
+        // 6 data limit
+        app.get("/running", async (req, res) => {
+            try {
+                // Fetch all campaigns from the database
+                const campaigns = await crowdCubeCollection.find().toArray();
+
+                // Get the current date
+                const currentDate = new Date();
+
+                // Filter campaigns with deadline in the future
+                const filteredCampaigns = campaigns
+                    .filter((campaign) => new Date(campaign.deadline) >= currentDate) // Filter by deadline
+                    .slice(0, 6); // Limit to 6 campaigns
+
+                // Send the filtered results
+                res.send(filteredCampaigns);
+            } catch (error) {
+                console.error("Error fetching running campaigns:", error);
+                res.status(500).send({ message: "Error fetching running campaigns." });
+            }
+        });
+
+        // Sort in ascending order
+        app.get("/campaigns/sortedByDonation", async (req, res) => {
+            const campaigns = await crowdCubeCollection.find().toArray();
+            const sortedCampaigns = campaigns.sort((a, b) => {
+                return parseFloat(a.minDonation) - parseFloat(b.minDonation);
+            });
+            res.send(sortedCampaigns);
+        });
+
+        // New Campaign receive
+        app.post('/addCampaign', async (req, res) => {
+            const newCampaign = req.body;
+            console.log(newCampaign);
+            const result = await crowdCubeCollection.insertOne(newCampaign);
+            res.send(result);
+        })
+
+        // Update Campaign
+        app.put('/addCampaign/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) }
+            const options = { upsert: true };
+            const updatedCampaign = req.body;
+            const campaign = {
+                $set: {
+                    image: updatedCampaign.image,
+                    title: updatedCampaign.title,
+                    type: updatedCampaign.type,
+                    description: updatedCampaign.description,
+                    minDonation: updatedCampaign.minDonation,
+                    deadline: updatedCampaign.deadline
+                }
+            }
+            const result = await crowdCubeCollection.updateOne(filter, campaign, options);
+            res.send(result);
+        })
+
+        // Delete Campaign
+        app.delete('/addCampaign/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await crowdCubeCollection.deleteOne(query);
+            res.send(result);
+        })
+
+        // User related api
+        // app.get('/users', async (req, res) => {
+        //     const cursor = userCollection.find();
+        //     const result = await cursor.toArray();
+        //     res.send(result);
+        // })
+
+
+        app.post('/users', async (req, res) => {
+            const newUser = req.body;
+            console.log('creating new user', newUser);
+            const result = await userCollection.insertOne(newUser);
+            res.send(result);
+        })
+
+
+
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
