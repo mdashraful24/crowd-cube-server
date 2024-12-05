@@ -24,10 +24,11 @@ const client = new MongoClient(uri, {
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
-        await client.connect();
+        // await client.connect();
 
         const crowdCubeCollection = client.db('crowdCubeDB').collection('crowdCube');
         const userCollection = client.db('crowdCubeDB').collection('users');
+        const myDonationCollection = client.db('crowdCubeDB').collection('MyDonations');
 
 
 
@@ -53,16 +54,6 @@ async function run() {
             const result = await crowdCubeCollection.findOne(query);
             res.send(result);
         });
-
-        // My donation
-        app.get("/myDonations", async (req, res) => {
-            const userEmail = req.params.userEmail;
-            console.log(userEmail)
-            const query = { userEmail: userEmail };
-            const result = await crowdCubeCollection.find(query).toArray();
-            res.send(result);
-        });
-
 
         // 6 data limit
         app.get("/running", async (req, res) => {
@@ -95,11 +86,27 @@ async function run() {
             res.send(sortedCampaigns);
         });
 
+        // My donations
+        
+
         // New Campaign receive
         app.post('/addCampaign', async (req, res) => {
             const newCampaign = req.body;
             console.log(newCampaign);
             const result = await crowdCubeCollection.insertOne(newCampaign);
+            res.send(result);
+        })
+
+        // My donation
+        app.post('/myDonations', async (req, res) => {
+            const donations = req.body;
+            // console.log(newCampaign);
+            const result = await myDonationCollection.insertOne(donations);
+            res.send(result);
+        })
+        app.get('/myDonations', async (req, res) => {
+            const cursor = myDonationCollection.find();
+            const result = await cursor.toArray();
             res.send(result);
         })
 
@@ -132,11 +139,11 @@ async function run() {
         })
 
         // User related api
-        // app.get('/users', async (req, res) => {
-        //     const cursor = userCollection.find();
-        //     const result = await cursor.toArray();
-        //     res.send(result);
-        // })
+        app.get('/users', async (req, res) => {
+            const cursor = userCollection.find();
+            const result = await cursor.toArray();
+            res.send(result);
+        })
 
 
         app.post('/users', async (req, res) => {
@@ -149,7 +156,7 @@ async function run() {
 
 
         // Send a ping to confirm a successful connection
-        await client.db("admin").command({ ping: 1 });
+        // await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
         // Ensures that the client will close when you finish/error
