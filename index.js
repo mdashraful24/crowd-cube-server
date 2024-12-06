@@ -98,7 +98,6 @@ async function run() {
             const result = await myDonationCollection.insertOne(donations);
             res.send(result);
         })
-        
 
         // Update Campaign
         app.put('/addCampaign/:id', async (req, res) => {
@@ -128,13 +127,12 @@ async function run() {
             res.send(result);
         })
 
-        // User related api
+        // User Related API
         app.get('/users', async (req, res) => {
             const cursor = userCollection.find();
             const result = await cursor.toArray();
             res.send(result);
         })
-
 
         app.post('/users', async (req, res) => {
             const newUser = req.body;
@@ -142,8 +140,6 @@ async function run() {
             const result = await userCollection.insertOne(newUser);
             res.send(result);
         })
-
-
 
         // Send a ping to confirm a successful connection
         // await client.db("admin").command({ ping: 1 });
@@ -156,13 +152,10 @@ async function run() {
 run().catch(console.dir);
 
 
-
-
-
 app.get('/', (req, res) => {
-    res.send('Crowdcube server is running')
+    res.send('CrowdCube server is running')
 })
 
 app.listen(port, () => {
-    console.log(`Crowdcube server is running on port: ${port}`)
+    console.log(`CrowdCube server is running on port: ${port}`)
 })
