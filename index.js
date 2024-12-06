@@ -25,11 +25,10 @@ async function run() {
         // Connect the client to the server	(optional starting in v4.7)
         // await client.connect();
 
+        // All Collections
         const crowdCubeCollection = client.db('crowdCubeDB').collection('crowdCube');
         const userCollection = client.db('crowdCubeDB').collection('users');
         const myDonationCollection = client.db('crowdCubeDB').collection('MyDonations');
-
-
 
         // New Campaign data read
         app.get('/addCampaign', async (req, res) => {
@@ -46,29 +45,22 @@ async function run() {
             res.send(result);
         })
 
-        // Details Camp
+        // Details Campaign
         app.get('/running/:id', async (req, res) => {
-            const id = req.params.id;  // Use req.params.id instead of res.params.id
+            const id = req.params.id;
             const query = { _id: new ObjectId(id) };
             const result = await crowdCubeCollection.findOne(query);
             res.send(result);
         });
 
-        // 6 data limit
+        // Six Data Limit
         app.get("/running", async (req, res) => {
             try {
-                // Fetch all campaigns from the database
                 const campaigns = await crowdCubeCollection.find().toArray();
-
-                // Get the current date
                 const currentDate = new Date();
-
-                // Filter campaigns with deadline in the future
                 const filteredCampaigns = campaigns
-                    .filter((campaign) => new Date(campaign.deadline) >= currentDate) // Filter by deadline
-                    .slice(0, 6); // Limit to 6 campaigns
-
-                // Send the filtered results
+                    .filter((campaign) => new Date(campaign.deadline) >= currentDate)
+                    .slice(0, 6);
                 res.send(filteredCampaigns);
             } catch (error) {
                 console.error("Error fetching running campaigns:", error);
@@ -76,7 +68,7 @@ async function run() {
             }
         });
 
-        // Sort in ascending order
+        // Sort Ascending Order
         app.get("/campaigns/sortedByDonation", async (req, res) => {
             const campaigns = await crowdCubeCollection.find().toArray();
             const sortedCampaigns = campaigns.sort((a, b) => {
@@ -85,10 +77,14 @@ async function run() {
             res.send(sortedCampaigns);
         });
 
-        // My donations
-        
+        // My Donations
+        app.get('/myDonations', async (req, res) => {
+            const cursor = myDonationCollection.find();
+            const result = await cursor.toArray();
+            res.send(result);
+        })
 
-        // New Campaign receive
+        // New Campaign Receive
         app.post('/addCampaign', async (req, res) => {
             const newCampaign = req.body;
             console.log(newCampaign);
@@ -96,18 +92,13 @@ async function run() {
             res.send(result);
         })
 
-        // My donation
+        // My Donation Post
         app.post('/myDonations', async (req, res) => {
             const donations = req.body;
-            // console.log(newCampaign);
             const result = await myDonationCollection.insertOne(donations);
             res.send(result);
         })
-        app.get('/myDonations', async (req, res) => {
-            const cursor = myDonationCollection.find();
-            const result = await cursor.toArray();
-            res.send(result);
-        })
+        
 
         // Update Campaign
         app.put('/addCampaign/:id', async (req, res) => {
