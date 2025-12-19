@@ -157,5 +157,5 @@ app.get('/', (req, res) => {
 })
 
 app.listen(port, () => {
-    console.log(`CrowdCube server is running on port: ${port}`)
+    console.log(`CrowdCube server is running on port: http://localhost:${port}`)
 })
